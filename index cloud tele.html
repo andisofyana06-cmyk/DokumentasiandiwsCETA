@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gudang — Cloud via Telegram</title>
+<style>
+  :root{
+    --bg:#0e1116;
+    --panel:#151a21;
+    --panel-2:#1b212a;
+    --line:#262e38;
+    --text:#e7ebf0;
+    --muted:#7c8896;
+    --accent:#2aabee; /* telegram blue */
+    --accent-2:#54c9ff;
+    --warn:#ff6b6b;
+    --ok:#4ade80;
+    --mono: "SF Mono", "Roboto Mono", Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Inter","Segoe UI",Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:40px 20px 80px;
+  }
+  .wrap{width:100%;max-width:720px;}
+
+  .hero{margin-bottom:32px;}
+  .hero .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    color:var(--accent-2);
+    text-transform:uppercase;
+    display:flex;align-items:center;gap:8px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-2);display:inline-block;}
+  .hero h1{
+    font-size:34px;
+    margin:10px 0 6px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .hero h1 .pipe{color:var(--accent);}
+  .hero p{color:var(--muted);margin:0;font-size:14.5px;line-height:1.6;max-width:560px;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .panel h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin:0 0 14px;
+    font-weight:600;
+  }
+  label{
+    display:block;font-size:13px;color:var(--muted);margin-bottom:6px;
+  }
+  input[type=text], input[type=password]{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:8px;
+    font-family:var(--mono);
+    font-size:13px;
+    margin-bottom:14px;
+  }
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .row{display:flex;gap:12px;}
+  .row > div{flex:1;}
+  .hint{font-size:12px;color:var(--muted);margin-top:-8px;margin-bottom:14px;line-height:1.5;}
+  .hint a{color:var(--accent-2);text-decoration:none;}
+
+  .drop{
+    border:1.5px dashed var(--line);
+    border-radius:14px;
+    padding:36px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    position:relative;
+  }
+  .drop:hover, .drop.drag{
+    border-color:var(--accent);
+    background:rgba(42,171,238,0.06);
+  }
+  .drop .plane{font-size:30px;display:block;margin-bottom:10px;transform:rotate(-15deg);}
+  .drop .main{font-size:15px;font-weight:600;}
+  .drop .sub{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  input[type=file]{display:none;}
+
+  .filelist{display:flex;flex-direction:column;gap:10px;}
+  .frow{
+    display:flex;align-items:center;gap:12px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+  }
+  .ficon{
+    width:34px;height:34px;border-radius:8px;
+    background:rgba(42,171,238,0.12);
+    color:var(--accent-2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-family:var(--mono);flex-shrink:0;
+  }
+  .finfo{flex:1;min-width:0;}
+  .fname{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fmeta{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+  .fstatus{font-size:11.5px;font-family:var(--mono);flex-shrink:0;}
+  .fstatus.ok{color:var(--ok);}
+  .fstatus.err{color:var(--warn);}
+  .fstatus.up{color:var(--accent-2);}
+  .dl{
+    color:var(--accent-2);
+    text-decoration:none;
+    font-size:12px;
+    font-family:var(--mono);
+    border:1px solid var(--line);
+    padding:5px 10px;
+    border-radius:6px;
+    flex-shrink:0;
+  }
+  .dl:hover{border-color:var(--accent);}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:10px 0;}
+
+  .bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px;}
+  .bar > i{display:block;height:100%;background:var(--accent);width:0%;transition:width .2s;}
+
+  .footer-note{
+    font-size:12px;color:var(--muted);text-align:center;margin-top:24px;line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow"><span class="dot"></span> Penyimpanan tanpa server</div>
+    <h1>Gudang<span class="pipe">.</span></h1>
+    <p>Setiap file yang kamu kirim di sini diteruskan langsung ke chat Telegram-mu lewat Bot API. Telegram menyimpan filenya — halaman ini cuma jadi pintu masuknya. Tidak ada database, tidak ada server, tidak ada biaya hosting.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Kunci akses</h2>
+    <div class="row">
+      <div>
+        <label for="token">Token Bot</label>
+        <input type="password" id="token" placeholder="123456:ABC-DEF...">
+      </div>
+      <div>
+        <label for="chatid">Chat ID</label>
+        <input type="text" id="chatid" placeholder="-1001234567890">
+      </div>
+    </div>
+    <div class="hint">
+      Belum punya bot? Chat <a href="https://t.me/BotFather" target="_blank">@BotFather</a> di Telegram, kirim <code>/newbot</code>, lalu salin tokennya. Untuk Chat ID, chat bot kamu dulu (apa saja), lalu buka
+      <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> dan cari angka <code>"chat":{"id":...}</code>.
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Kirim file</h2>
+    <div class="drop" id="drop">
+      <span class="plane">✈️</span>
+      <div class="main">Seret file ke sini, atau klik untuk pilih</div>
+      <div class="sub">Maks ±2GB per file (limit dari Telegram, butuh self-hosted Bot API server untuk file besar)</div>
+      <input type="file" id="fileInput" multiple>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Riwayat upload sesi ini</h2>
+    <div class="filelist" id="fileList">
+      <div class="empty">Belum ada file yang dikirim.</div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    File yang diunggah bisa kamu lihat dan unduh kapan pun lewat chat Telegram tempat bot mengirimkannya.<br>
+    Token bot tidak disimpan di mana pun — hilang begitu halaman ini ditutup.
+  </div>
+</div>
+
+<script>
+const tokenEl = document.getElementById('token');
+const chatEl = document.getElementById('chatid');
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+
+let entries = []; // {id, name, size, status, url, error}
+
+function fmtSize(bytes){
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function ext(name){
+  const parts = name.split('.');
+  return parts.length > 1 ? parts.pop().toUpperCase().slice(0,4) : 'FILE';
+}
+
+function render(){
+  if(entries.length === 0){
+    fileList.innerHTML = '<div class="empty">Belum ada file yang dikirim.</div>';
+    return;
+  }
+  fileList.innerHTML = entries.map(e => {
+    let statusHtml = '';
+    if(e.status === 'uploading'){
+      statusHtml = `<div style="flex-shrink:0;width:90px;"><div class="fstatus up">Mengirim…</div><div class="bar"><i style="width:${e.progress||0}%"></i></div></div>`;
+    } else if(e.status === 'ok'){
+      statusHtml = `<a class="dl" href="${e.url}" target="_blank">Unduh</a>`;
+    } else if(e.status === 'err'){
+      statusHtml = `<div class="fstatus err">${e.error || 'Gagal'}</div>`;
+    }
+    return `<div class="frow">
+      <div class="ficon">${ext(e.name)}</div>
+      <div class="finfo">
+        <div class="fname">${e.name}</div>
+        <div class="fmeta">${fmtSize(e.size)}</div>
+      </div>
+      ${statusHtml}
+    </div>`;
+  }).join('');
+}
+render();
+
+async function uploadFile(file){
+  const token = tokenEl.value.trim();
+  const chatId = chatEl.value.trim();
+  const entry = {id: Math.random().toString(36).slice(2), name: file.name, size: file.size, status:'uploading', progress: 10};
+  entries.unshift(entry);
+  render();
+
+  if(!token || !chatId){
+    entry.status = 'err';
+    entry.error = 'Isi Token & Chat ID dulu';
+    render();
+    return;
+  }
+
+  try{
+    const form = new FormData();
+    form.append('chat_id', chatId);
+    form.append('document', file, file.name);
+
+    entry.progress = 40;
+    render();
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: 'POST',
+      body: form
+    });
+    const data = await res.json();
+
+    if(!data.ok){
+      entry.status = 'err';
+      entry.error = data.description || 'Gagal kirim';
+      render();
+      return;
+    }
+
+    entry.progress = 80;
+    render();
+
+    const doc = data.result.document || data.result.video || data.result.audio;
+    const fileId = doc ? doc.file_id : null;
+
+    if(fileId){
+      const fileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+      const fileData = await fileRes.json();
+      if(fileData.ok){
+        entry.url = `https://api.telegram.org/file/bot${token}/${fileData.result.file_path}`;
+      }
+    }
+
+    entry.status = 'ok';
+    render();
+  }catch(err){
+    entry.status = 'err';
+    entry.error = 'Koneksi gagal';
+    render();
+  }
+}
+
+function handleFiles(files){
+  Array.from(files).forEach(uploadFile);
+}
+
+drop.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { handleFiles(e.target.files); fileInput.value=''; });
+
+['dragenter','dragover'].forEach(evt => drop.addEventListener(evt, e => {
+  e.preventDefault(); drop.classList.add('drag');
+}));
+['dragleave','drop'].forEach(evt => drop.addEventListener(evt, e => {
+  e.preventDefault(); drop.classList.remove('drag');
+}));
+drop.addEventListener('drop', e => {
+  if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+</script>
+</body>
+</html>
